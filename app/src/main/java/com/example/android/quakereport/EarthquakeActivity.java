@@ -14,18 +14,15 @@
  * limitations under the License.
  */
 package com.example.android.quakereport;
-
-import android.os.AsyncTask;
+import android.app.LoaderManager;
+import android.content.Loader;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.widget.ListView;
-
-import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
+import android.app.LoaderManager.LoaderCallbacks;
 
-public class EarthquakeActivity extends AppCompatActivity {
+public class EarthquakeActivity extends AppCompatActivity implements LoaderCallbacks<String> {
 
     public static final String LOG_TAG = EarthquakeActivity.class.getName();
     itemsAdapter adapter;
@@ -35,45 +32,37 @@ public class EarthquakeActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.earthquake_activity);
 
-        background ob=new background();
-        ob.execute(QueryUtils.USGS_REQUEST_URL);
-
         // Create a fake list of earthquake locations.
         //ArrayList<Earthquake> earthquakes = QueryUtils.extractEarthquakes();
-
-
         // Find a reference to the {@link ListView} in the layout
         ListView earthquakeListView = (ListView) findViewById(R.id.list);
-
         // Create a new {@link ArrayAdapter} of earthquakes
-        adapter = new itemsAdapter(this,new ArrayList<Earthquake>());
-
+        adapter = new itemsAdapter(this, new ArrayList<Earthquake>());
         // Set the adapter on the {@link ListView}
         // so the list can be populated in the user interface
         earthquakeListView.setAdapter(adapter);
+        LoaderManager loaderManager = getLoaderManager();
+        loaderManager.initLoader(1, null,this);
     }
 
-    private class background extends AsyncTask<String, Void, String>
-    {
-        @Override
-        protected String doInBackground(String... strings) {
-            URL url= QueryUtils.createUrl(strings[0]);
-            String jsonResponse="";
-            try {
-                    jsonResponse=QueryUtils.makeHttpRequest(url);
-                }
-                catch (IOException e)
-                {
-                    Log.e(LOG_TAG, "Problem making the HTTP request.", e);
-                }
-                return jsonResponse;
-        }
+    @Override
+    public Loader<String> onCreateLoader(int i, Bundle bundle) {
+        // TODO: Create a new loader for the given URL
+        return new EarthquakeLoader(EarthquakeActivity.this, QueryUtils.USGS_REQUEST_URL);
+    }
 
-        @Override
-        protected void onPostExecute(String s) {
-            ArrayList<Earthquake> abc=QueryUtils.extractFeatureFromJson(s);
-            adapter.clear();
-            adapter.addAll(abc);
-        }
+    @Override
+    public void onLoadFinished(Loader<String> loader, String s) {
+        // TODO: Update the UI with the result
+        adapter.clear();
+        ArrayList<Earthquake> abc = QueryUtils.extractFeatureFromJson(s);
+        adapter.clear();
+        adapter.addAll(abc);
+    }
+
+    @Override
+    public void onLoaderReset(Loader<String> loader) {
+        // TODO: Loader reset, so we can clear out our existing data.
+        adapter.clear();
     }
 }
